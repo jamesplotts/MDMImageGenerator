@@ -2,60 +2,7 @@
 Imports System.IO
 
 
-'Stereolithography File Formats
-
-'Binary Format (.stl)
-
-'Binary (.stl) files are organized as an 84 byte header followed by = 50-byte records each of which describes one triangle facet:=20.
-
-'# of | bytes | description
-'-------------------------------------------------------------------
-'80 | Any text such as the creator's name
-'4 | int equal to the number of facets in file
-'----here is where the facets start (triangle 1)-----------------
-'4 | float normal x
-'4 | float normal y
-'4 | float normal z
-'4 | float vertex1 x
-'4 | float vertex1 y
-'4 | float vertex1 z
-'4 | float vertex2 x
-'4 | float vertex2 y
-'4 | float vertex2 z
-'4 | float vertex3 x
-'4 | float vertex3 y
-'4 | float vertex3 z
-'2 | unused (padding to make 50-bytes)
-'--------------------------------facet 2-------------------------
-'4 | float normal x
-'4 | float normal y
-'4 | float normal z
-'4 | float vertex1 x
-'4 | float vertex1 y
-'4 | float vertex1 z
-'4 | float vertex2 x
-'4 | float vertex2 y
-'4 | float vertex2 z
-'4 | float vertex3 x
-'4 | float vertex3 y
-'4 | float vertex3 z
-'2 | unused (padding to make 50-bytes)
-'--------------------------------facet 3-------------------------
-'etc. ...
-
-'A facet entry begins with the x,y,z components of the triangle's face normal vector. The normal vector points in a direction away from the surface and it should be
-'normalized to unit length. The x,y,z = coordinates of the triangle's three vertices come next. They are stored in CCW = order when viewing the facet from outside the
-'surface. The direction of the normal vector follows the "right-hand-rule" when traversing the triangle vertices from 1 to 3, i.e., with the fingers of your right hand curled
-'in the direction of vertex 1 to 2 to 3, your thumb points in the = direction of the surface normal.
-
-'Notice that each facet entry is 50 bytes. So adding the 84 bytes in the header space, a binary file should have a size in bytes =3D 84 + (number of facets) * 50. 
-
-'Notice the 2 extra bytes thrown in at the end of each entry to make it a nice even 50. 50 is a nice number for people, but not for most 32-bit computers because they
-'store values on 4-byte boundaries. Therefore, when writing programs to read and write .stl files the programmer has to take care to design data structures that
-'accomodate this problem. 
-
-'The Velocity2 software writes a binary .stl file having the general organization described above. The first 84 bytes of the file form the = header, a C-language
-'structure having the definition: 
+' Thanks to thjerman for the Stereolithography File Formats post at http://forums.codeguru.com/showthread.php?148668-loading-a-stl-3d-model-file
 
 Public Class STLDefinition
 
