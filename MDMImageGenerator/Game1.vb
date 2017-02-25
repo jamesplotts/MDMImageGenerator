@@ -63,7 +63,7 @@ Namespace safeprojectname
             BasicEffect.LightingEnabled = False
 
             ' Geometry  - a simple triangle about the origin
-            
+
 
 
             'vertexBuffer = New VertexBuffer(GraphicsDevice, GetType(VertexPositionColor), triangleVertices.Length, BufferUsage.WriteOnly)
