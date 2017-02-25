@@ -62,12 +62,6 @@ Namespace OpenForge.Development
             ' If you want to use lighting and VPC you need to create a custom def
             BasicEffect.LightingEnabled = False
 
-            ' Geometry  - a simple triangle about the origin
-
-
-
-            'vertexBuffer = New VertexBuffer(GraphicsDevice, GetType(VertexPositionColor), triangleVertices.Length, BufferUsage.WriteOnly)
-            'vertexBuffer.SetData(Of VertexPositionColor)(triangleVertices)
 
 
 
@@ -254,7 +248,6 @@ Namespace OpenForge.Development
             For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
 
                 pass.Apply()
-                '    GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 3)
                 If verticesloaded = True Then GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, NumFacets, VertexPositionColorNormal.VertexDeclaration)
 
             Next
