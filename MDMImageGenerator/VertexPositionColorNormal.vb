@@ -1,7 +1,7 @@
 ﻿Imports Microsoft.Xna.Framework.Graphics
 Imports Microsoft.Xna.Framework
 
-
+' Thanks to Riemer's XNA Tutorials for this format.  http://www.riemers.net/eng/Tutorials/XNA/Csharp/Series1/Lighting_basics.php
 
 Public Structure VertexPositionColorNormal
 

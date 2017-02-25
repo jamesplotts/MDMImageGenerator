@@ -7,11 +7,11 @@ Imports Microsoft.Xna.Framework.Content
 Imports System.Threading
 Imports System
 
-Namespace safeprojectname
+Namespace OpenForge.Development
     ''' <summary>
     ''' This is the main type for your game.
     ''' </summary>
-    Public Class Game1
+    Public Class MDMImageGenerator
         Inherits Game
         Private graphics As GraphicsDeviceManager
         Private spriteBatch As SpriteBatch

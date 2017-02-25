@@ -2,7 +2,7 @@
 Imports System
 
 
-Namespace safeprojectname
+Namespace OpenForge.Development
     ''' <summary>
     ''' The main class.
     ''' </summary>
@@ -14,7 +14,7 @@ Namespace safeprojectname
         Public Sub Main()
 
 #If Windows OrElse LINUX Then
-            Using game = New Game1()
+            Using game = New MDMImageGenerator()
                 game.Run()
             End Using
 #End If
