@@ -89,22 +89,22 @@ Namespace OpenForge.Development
                 With .normal
                     .x = rc(sr)
                     .y = rc(sr)
-                    .z = rc(sr)
+                    .z = -rc(sr)
                 End With
                 With .v1
                     .x = rc(sr)
                     .y = rc(sr)
-                    .z = rc(sr)
+                    .z = -rc(sr)
                 End With
                 With .v2
                     .x = rc(sr)
                     .y = rc(sr)
-                    .z = rc(sr)
+                    .z = -rc(sr)
                 End With
                 With .v3
                     .x = rc(sr)
                     .y = rc(sr)
-                    .z = rc(sr)
+                    .z = -rc(sr)
                 End With
             End With
             Dim tb(2) As Byte
