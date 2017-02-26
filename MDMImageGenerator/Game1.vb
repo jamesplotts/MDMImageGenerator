@@ -37,7 +37,7 @@ Namespace OpenForge.Development
         Private spriteFontPosition() As Vector2 = {New Vector2(5, 5), New Vector2(5, 20), New Vector2(5, 35), New Vector2(5, 50), New Vector2(5, 65)}
         Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50)}
         Private text() As String = {"Press 'F' to load an *.STL object", _
-                                    "Q and E rotate NSEW views.", _
+                                    "Use arrow keys for NSEW views.", _
                                     "WASD to center object, mouse scroll to zoom.", _
                                     "'SpaceBar' saves screenshot.", _
                                     ""}
