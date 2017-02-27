@@ -19,9 +19,9 @@ Namespace OpenForge.Development
         Inherits Game
         Private graphics As GraphicsDeviceManager
         Private spriteBatch As SpriteBatch
-        Private camTarget As Vector3
-        Private camPosition As Vector3
-        Private orbit As Boolean
+        'Private camTarget As Vector3
+        'Private camPosition As Vector3
+        'Private orbit As Boolean
         Private projectionMatrix As Matrix
         Private worldMatrix As Matrix
         Private triangleVertices() As VertexPositionColor
@@ -35,13 +35,13 @@ Namespace OpenForge.Development
         Private ScreenHeight As Int32 = 500
         Private ScreenWidth As Int32 = 500
         Private spriteFontPosition() As Vector2 = {New Vector2(5, 5), New Vector2(5, 20), New Vector2(5, 35), New Vector2(5, 50), New Vector2(5, 65)}
-        Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50)}
+        Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50), New Vector2(5, ScreenHeight - 15 - 65)}
         Private text() As String = {"Press 'F' to load an *.STL object", _
                                     "Use arrow keys for NSEW views.", _
                                     "WASD to center object, mouse scroll to zoom.", _
                                     "'SpaceBar' saves screenshot.", _
                                     ""}
-
+        Private Text2() As String = {"Top", "North", "East", "South", "West"}
 
         Private _total_frames As Int32 = 0
         Private _elapsed_time As Double = 0.0F
@@ -56,7 +56,7 @@ Namespace OpenForge.Development
         Private ScrollValue As Int32
         Private Scales As New Vector3(3, 3, 3)
         Private ObjectCenter As Matrix = Matrix.Identity
-        Private OutputGenerated(4) As Boolean
+        Private OutputGenerated(5) As Boolean
 
         Public Sub New()
 
@@ -87,6 +87,8 @@ Namespace OpenForge.Development
             spriteBatch = New SpriteBatch(GraphicsDevice)
             spriteFont = Content.Load(Of SpriteFont)("SpriteFont1")
 
+
+
         End Sub
 
         Public Enum eDir
@@ -94,10 +96,13 @@ Namespace OpenForge.Development
             East
             South
             West
+            Top
             Unspecified
         End Enum
 
         Private RotateY As Matrix = Matrix.Identity
+        Private RotateTop As Matrix = Matrix.Identity
+        Private bolRotateToggle As Boolean = True
 
         ''' <summary>
         ''' Allows the game to run logic such as updating the world,
@@ -146,8 +151,29 @@ Namespace OpenForge.Development
                     RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(90.0F))
                     CurDir = eDir.East
                 End If
+                If .IsKeyDown(Input.Keys.Delete) Then
+
+                    
+                    bolRotateToggle = Not bolRotateToggle
+                End If
+                
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) Then End
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Space)) Then GetScreen = True
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Space)) Then
+                    Dim tb As Boolean = True
+                    For i As Int32 = 0 To 4
+                        tb = tb And OutputGenerated(i)
+                    Next
+                    If tb = True OrElse verticesloaded = False Then
+                        If loadthreadrunning = False Then
+                            loadthreadrunning = True
+                            Dim thread As New Thread(AddressOf BackgroundLoader)
+                            thread.SetApartmentState(ApartmentState.STA)
+                            thread.Start()
+                        End If
+                    Else
+                        GetScreen = True
+                    End If
+                End If
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.A)) Then
                     FocusPoint.X += MoveIncrement
                     CameraOffset.X += MoveIncrement
@@ -173,7 +199,7 @@ Namespace OpenForge.Development
                     CameraOffset.Z -= MoveIncrement
                 End If
 
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Space)) Then orbit = Not orbit
+                'If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Space)) Then orbit = Not orbit
 
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.F)) Then
                     If loadthreadrunning = False Then
@@ -193,7 +219,6 @@ Namespace OpenForge.Development
             '    If CurDir > eDir.West Then CurDir = CType(CurDir - eDir.Unspecified, eDir)
             '    orbit = False
             'End If
-            worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY
             MyBase.Update(gameTime)
         End Sub
 
@@ -218,6 +243,13 @@ Namespace OpenForge.Development
             GraphicsDevice.SetVertexBuffer(vertexBuffer)
             GraphicsDevice.RasterizerState = RasterizerState
 
+            If bolRotateToggle Then
+                RotateTop = Matrix.CreateRotationZ(MathHelper.ToRadians(55.0F)) * Matrix.CreateRotationY(MathHelper.ToRadians(135.0F))
+            Else
+                RotateTop = Matrix.Identity
+            End If
+            worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY * RotateTop
+
             ' Draw all the triangles for the currently loaded object
             For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
                 pass.Apply()
@@ -230,11 +262,11 @@ Namespace OpenForge.Development
             For i As Int32 = 0 To 4
                 spriteBatch.DrawString(spriteFont, text(i), spriteFontPosition(i), Microsoft.Xna.Framework.Color.Black)
             Next
-            For i As Int32 = 0 To 3
+            For i As Int32 = 0 To 4
                 If OutputGenerated(i) = True Then
-                    spriteBatch.DrawString(spriteFont, CType(i, eDir).ToString, spriteFontPosition2(i), Microsoft.Xna.Framework.Color.Black) '  
+                    spriteBatch.DrawString(spriteFont, Text2(i), spriteFontPosition2(4 - i), Microsoft.Xna.Framework.Color.Black) '  
                 Else
-                    spriteBatch.DrawString(spriteFont, "*" + CType(i, eDir).ToString, spriteFontPosition2(i), Microsoft.Xna.Framework.Color.Red) '
+                    spriteBatch.DrawString(spriteFont, "*" + Text2(i), spriteFontPosition2(4 - i), Microsoft.Xna.Framework.Color.Red) '
                 End If
             Next
             spriteBatch.End()
@@ -264,25 +296,40 @@ Namespace OpenForge.Development
                     ' Make Background Transparent
                     b.MakeTransparent(System.Drawing.Color.CornflowerBlue)
                     ' save it!
-                    Dim s As String = Path.GetDirectoryName(SavePath) + "\" + Path.GetFileNameWithoutExtension(SavePath) + "." + CurDir.ToString + ".png"
+                    Dim s As String = Path.GetDirectoryName(SavePath) + "\" + Path.GetFileNameWithoutExtension(SavePath) + "."
+                    If bolRotateToggle Then
+                        s += "Top"
+                    Else
+                        s += CurDir.ToString
+                    End If
+                    s += ".png"
                     'text(3) = s
                     b.Save(s, System.Drawing.Imaging.ImageFormat.Png)
-                    OutputGenerated(CurDir) = True
+
                     ' launch it in system viewer
                     'Process.Start(s)
-                    CurDir = CType(CurDir + 1, eDir)
-                    If CurDir > eDir.West Then CurDir = eDir.North
-                    Select Case CurDir
-                        Case eDir.North
-                            RotateY = Matrix.Identity
-                        Case eDir.South
-                            RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(180.0F))
-                        Case eDir.West
-                            RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(-90.0F))
-                        Case eDir.East
-                            RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(90.0F))
-                    End Select
-                    worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY
+                    If bolRotateToggle Then
+                        CurDir = eDir.North
+                        RotateY = Matrix.Identity
+                        bolRotateToggle = False
+                        OutputGenerated(0) = True
+                    Else
+                        OutputGenerated(CurDir + 1) = True
+                        CurDir = CType(CurDir + 1, eDir)
+                        If CurDir > eDir.West Then CurDir = eDir.North
+                        Select Case CurDir
+                            Case eDir.North
+                                RotateY = Matrix.Identity
+                            Case eDir.South
+                                RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(180.0F))
+                            Case eDir.West
+                                RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(-90.0F))
+                            Case eDir.East
+                                RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(90.0F))
+                        End Select
+                    End If
+
+                    worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY * RotateTop
                     bolAlreadyRun = False
                 End If
                 GetScreen = False
@@ -346,9 +393,12 @@ Namespace OpenForge.Development
                     ObjectCenter = Matrix.CreateTranslation(-.STLHeader.XCenter, -.STLHeader.YCenter, .STLHeader.ZCenter)
                 End With
                 verticesloaded = True
-                For i As Int32 = 0 To 3
+                For i As Int32 = 0 To 4
                     OutputGenerated(i) = False
                 Next
+                bolRotateToggle = True
+                CurDir = eDir.North
+                RotateY = Matrix.Identity
             End If
             loadthreadrunning = False
         End Sub
