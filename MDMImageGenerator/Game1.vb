@@ -19,9 +19,6 @@ Namespace OpenForge.Development
         Inherits Game
         Private graphics As GraphicsDeviceManager
         Private spriteBatch As SpriteBatch
-        'Private camTarget As Vector3
-        'Private camPosition As Vector3
-        'Private orbit As Boolean
         Private projectionMatrix As Matrix
         Private worldMatrix As Matrix
         Private triangleVertices() As VertexPositionColor
@@ -38,11 +35,10 @@ Namespace OpenForge.Development
         Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50), New Vector2(5, ScreenHeight - 15 - 65)}
         Private text() As String = {"Press 'F' to load an *.STL object, C to set color", _
                                     "Use arrow keys for NSEW views.", _
-                                    "WASD to center object, mouse scroll to zoom.", _
-                                    "'SpaceBar' saves screenshot.", _
+                                    "WASD to center object, mousewheel to scale.", _
+                                    "'SpaceBar' saves screenshot & advances view.", _
                                     "", "", "", "", ""}
         Private Text2() As String = {"Top", "North", "East", "South", "West"}
-
         Private _total_frames As Int32 = 0
         Private _elapsed_time As Double = 0.0F
         Private _fps As Int32 = 0
@@ -59,7 +55,6 @@ Namespace OpenForge.Development
         Private OutputGenerated(5) As Boolean
         Private ObjectColor As Microsoft.Xna.Framework.Color = Microsoft.Xna.Framework.Color.DarkGray
         Private colorthreadrunning As Boolean
-
 
         Public Enum eDir
             North
@@ -81,7 +76,6 @@ Namespace OpenForge.Development
 
 
         Public Sub New()
-
             graphics = New GraphicsDeviceManager(Me)
             Content.RootDirectory = "Content"
             graphics.PreferredBackBufferWidth = 500
@@ -99,12 +93,9 @@ Namespace OpenForge.Development
 
             projectionMatrix = Matrix.CreateOrthographic(500, 500, 1.0F, 10000.0F)
             worldMatrix = Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F))
-
-            ' BasicEffect
             BasicEffect = New BasicEffect(GraphicsDevice)
             BasicEffect.Alpha = 1.0F
             BasicEffect.VertexColorEnabled = True
-            'BasicEffect.EnableDefaultLighting()
             With BasicEffect
                 .LightingEnabled = True '// turn on the lighting subsystem.
                 .DirectionalLight0.DiffuseColor = New Vector3(0.5F, 0.5F, 0.5F) '// a red light
@@ -116,8 +107,6 @@ Namespace OpenForge.Development
             spriteBatch = New SpriteBatch(GraphicsDevice)
             spriteFont = Content.Load(Of SpriteFont)("SpriteFont1")
 
-
-
         End Sub
 
 
@@ -128,14 +117,14 @@ Namespace OpenForge.Development
         ''' <param name="gameTime">Provides a snapshot of timing values.</param>
         Protected Overrides Sub Update(gameTime As GameTime)
             ' FPS logic here
-            ' update
             _elapsed_time += gameTime.ElapsedGameTime.TotalMilliseconds
-            ' 1 second has passed
-            If (_elapsed_time > 1000.0F) Then
+            If (_elapsed_time > 1000.0F) Then ' 1 second has passed
                 _fps = _total_frames
                 _total_frames = 0
                 _elapsed_time -= 1000.0F
             End If
+
+            ' Timer to handle long keypresses on spacebar
             If SpaceDelay Then
                 Static spacecount As Double
                 spacecount += gameTime.ElapsedGameTime.TotalMilliseconds
@@ -144,6 +133,8 @@ Namespace OpenForge.Development
                     spacecount = 0
                 End If
             End If
+
+            ' Object scaling here
             Dim m As MouseState = Mouse.GetState()
             Static bolScrollStart As Boolean
             If Not bolScrollStart Then
@@ -154,9 +145,9 @@ Namespace OpenForge.Development
             If Not scrollticks = ScrollValue Then
                 ScaleValue += 0.001F * (scrollticks - ScrollValue)
                 Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
-
                 ScrollValue = scrollticks
             End If
+
             ' Keyboard Input Processing Here
             Dim state As KeyboardState = Keyboard.GetState()
             With state
@@ -186,7 +177,6 @@ Namespace OpenForge.Development
                         thread.SetApartmentState(ApartmentState.STA)
                         thread.Start()
                     End If
-
                 End If
 
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) Then End
@@ -194,9 +184,18 @@ Namespace OpenForge.Development
                     For i As Int32 = 0 To 4
                         OutputGenerated(i) = False
                     Next
+                    bolRotateToggle = True
+                    FocusPoint.Z = 0
+                    FocusPoint.X = 0
+                    CameraOffset.X = 1000
+                    CameraOffset.Z = 1000
                 End If
                 If (.IsKeyDown(Input.Keys.T)) Then
                     bolRotateToggle = True
+                    FocusPoint.Z = 0
+                    FocusPoint.X = 0
+                    CameraOffset.X = 1000
+                    CameraOffset.Z = 1000
                 End If
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Space) And Not SpaceDelay) Then
                     Dim tb As Boolean = True
@@ -245,43 +244,10 @@ Namespace OpenForge.Development
                         thread.SetApartmentState(ApartmentState.STA)
                         thread.Start()
                     End If
-
                 End If
             End With
-
-            'If (orbit) Then
-            '    Dim rotationMatrix As Matrix = Matrix.CreateRotationY(MathHelper.ToRadians(90.0F))
-            '    camPosition = Vector3.Transform(camPosition, rotationMatrix)
-            '    CurDir = CType(CurDir + eDir.North, eDir)
-            '    If CurDir > eDir.West Then CurDir = CType(CurDir - eDir.Unspecified, eDir)
-            '    orbit = False
-            'End If
             MyBase.Update(gameTime)
         End Sub
-
-
-        <STAThreadAttribute> _
-        Sub SetColor()
-            Dim c As New ColorDialog
-            Dim dlgres As DialogResult
-            c.Color = Drawing.Color.FromArgb(ObjectColor.A, ObjectColor.R, ObjectColor.G, ObjectColor.B)
-            Static bolcoloronce As Boolean
-            If Not bolcoloronce Then
-                dlgres = c.ShowDialog()
-                If dlgres = DialogResult.OK Then
-                    ObjectColor = Microsoft.Xna.Framework.Color.FromNonPremultiplied(c.Color.R, c.Color.G, c.Color.B, c.Color.A)
-                    BasicEffect.EmissiveColor = New Vector3(c.Color.R / 255, c.Color.G / 255, c.Color.B / 255)
-                    'For Each v As VertexPositionColorNormal In vertices
-                    '    v.Color = ObjectColor
-                    'Next
-                    dlgres = DialogResult.Cancel
-                End If
-                'bolcoloronce = True
-            End If
-            c = Nothing
-            colorthreadrunning = False
-        End Sub
-
 
         ''' <summary>
         ''' This is called when the game should draw itself.
@@ -319,9 +285,9 @@ Namespace OpenForge.Development
             spriteBatch.Begin(, , , DepthStencilState.Default)
             text(5) = "xmin=" + xMin.ToString + ", xmax=" + xMax.ToString
             text(6) = "ymin=" + yMin.ToString + ", ymax=" + yMax.ToString
-            text(7) = "zmin=" + zMin.ToString + ", zmax=" + zMax.ToString
+            text(7) = "zmin=" + zMin.ToString + ", zmax=" + zMax.ToString + ", X=" + FocusPoint.Z.ToString
 
-            text(4) = "FPS=" + _fps.ToString + ", Triangle Count=" + NumFacets.ToString + ", Dir=" + CurDir.ToString
+            text(4) = "FPS=" + _fps.ToString + ", Triangle Count=" + NumFacets.ToString + ", Dir=" + CurDir.ToString + ", Scale=" + ScaleValue.ToString
             For i As Int32 = 0 To 7
                 spriteBatch.DrawString(spriteFont, text(i), spriteFontPosition(i), Microsoft.Xna.Framework.Color.Black)
             Next
@@ -381,6 +347,8 @@ Namespace OpenForge.Development
                         RotateY = Matrix.Identity
                         bolRotateToggle = False
                         OutputGenerated(0) = True
+                        ScaleValue = ScaleValue * 0.7F
+                        Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
                     Else
                         OutputGenerated(CurDir + 1) = True
                         CurDir = CType(CurDir + 1, eDir)
@@ -408,7 +376,25 @@ Namespace OpenForge.Development
 
 
 
+        <STAThreadAttribute> _
+        Sub SetColor()
+            Dim c As New ColorDialog
+            Dim dlgres As DialogResult
+            c.Color = Drawing.Color.FromArgb(ObjectColor.A, ObjectColor.R, ObjectColor.G, ObjectColor.B)
+            dlgres = c.ShowDialog()
+            If dlgres = DialogResult.OK Then
+                ObjectColor = Microsoft.Xna.Framework.Color.FromNonPremultiplied(c.Color.R, c.Color.G, c.Color.B, c.Color.A)
+                BasicEffect.EmissiveColor = New Vector3(CSng(c.Color.R / 255), CSng(c.Color.G / 255), CSng(c.Color.B / 255))
+                dlgres = DialogResult.Cancel
+            End If
+            c = Nothing
+            colorthreadrunning = False
+        End Sub
 
+        ''' <summary>
+        ''' Displays an open file dialog and then loads the chosen STL object.
+        ''' </summary>
+        ''' <remarks></remarks>
         <STAThreadAttribute> _
         Sub BackgroundLoader()
             Dim fd As New OpenFileDialog
@@ -471,6 +457,10 @@ Namespace OpenForge.Development
                 bolRotateToggle = True
                 CurDir = eDir.North
                 RotateY = Matrix.Identity
+                FocusPoint.Z = 0
+                FocusPoint.X = 0
+                CameraOffset.X = 1000
+                CameraOffset.Z = 1000
             End If
             loadthreadrunning = False
         End Sub
