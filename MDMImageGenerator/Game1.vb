@@ -36,7 +36,7 @@ Namespace OpenForge.Development
         Private ScreenWidth As Int32 = 500
         Private spriteFontPosition() As Vector2 = {New Vector2(5, 5), New Vector2(5, 20), New Vector2(5, 35), New Vector2(5, 50), New Vector2(5, 65), New Vector2(5, 80), New Vector2(5, 95), New Vector2(5, 110), New Vector2(5, 125)}
         Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50), New Vector2(5, ScreenHeight - 15 - 65)}
-        Private text() As String = {"Press 'F' to load an *.STL object", _
+        Private text() As String = {"Press 'F' to load an *.STL object, C to set color", _
                                     "Use arrow keys for NSEW views.", _
                                     "WASD to center object, mouse scroll to zoom.", _
                                     "'SpaceBar' saves screenshot.", _
@@ -57,6 +57,8 @@ Namespace OpenForge.Development
         Private Scales As New Vector3(3, 3, 3)
         Private ObjectCenter As Matrix = Matrix.Identity
         Private OutputGenerated(5) As Boolean
+        Private ObjectColor As Microsoft.Xna.Framework.Color = Microsoft.Xna.Framework.Color.DarkGray
+        Private colorthreadrunning As Boolean
 
 
         Public Enum eDir
@@ -102,8 +104,15 @@ Namespace OpenForge.Development
             BasicEffect = New BasicEffect(GraphicsDevice)
             BasicEffect.Alpha = 1.0F
             BasicEffect.VertexColorEnabled = True
-            BasicEffect.EnableDefaultLighting()
-
+            'BasicEffect.EnableDefaultLighting()
+            With BasicEffect
+                .LightingEnabled = True '// turn on the lighting subsystem.
+                .DirectionalLight0.DiffuseColor = New Vector3(0.5F, 0.5F, 0.5F) '// a red light
+                .DirectionalLight0.Direction = New Vector3(0, -1, 0) '// coming along the x-axis
+                .DirectionalLight0.SpecularColor = New Vector3(1, 1, 1) '// with green highlights
+                .AmbientLightColor = New Vector3(0.2F, 0.2F, 0.2F)
+                .EmissiveColor = New Vector3(0.7F, 0.7F, 0.7F)
+            End With
             spriteBatch = New SpriteBatch(GraphicsDevice)
             spriteFont = Content.Load(Of SpriteFont)("SpriteFont1")
 
@@ -168,11 +177,18 @@ Namespace OpenForge.Development
                     CurDir = eDir.East
                 End If
                 If .IsKeyDown(Input.Keys.Delete) Then
-
-                    
                     bolRotateToggle = Not bolRotateToggle
                 End If
-                
+                If .IsKeyDown(Input.Keys.C) Then
+                    If colorthreadrunning = False Then
+                        colorthreadrunning = True
+                        Dim thread As New Thread(AddressOf SetColor)
+                        thread.SetApartmentState(ApartmentState.STA)
+                        thread.Start()
+                    End If
+
+                End If
+
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) Then End
                 If (.IsKeyDown(Input.Keys.R)) Then
                     For i As Int32 = 0 To 4
@@ -243,6 +259,28 @@ Namespace OpenForge.Development
             MyBase.Update(gameTime)
         End Sub
 
+
+        <STAThreadAttribute> _
+        Sub SetColor()
+            Dim c As New ColorDialog
+            Dim dlgres As DialogResult
+            c.Color = Drawing.Color.FromArgb(ObjectColor.A, ObjectColor.R, ObjectColor.G, ObjectColor.B)
+            Static bolcoloronce As Boolean
+            If Not bolcoloronce Then
+                dlgres = c.ShowDialog()
+                If dlgres = DialogResult.OK Then
+                    ObjectColor = Microsoft.Xna.Framework.Color.FromNonPremultiplied(c.Color.R, c.Color.G, c.Color.B, c.Color.A)
+                    BasicEffect.EmissiveColor = New Vector3(c.Color.R / 255, c.Color.G / 255, c.Color.B / 255)
+                    'For Each v As VertexPositionColorNormal In vertices
+                    '    v.Color = ObjectColor
+                    'Next
+                    dlgres = DialogResult.Cancel
+                End If
+                'bolcoloronce = True
+            End If
+            c = Nothing
+            colorthreadrunning = False
+        End Sub
 
 
         ''' <summary>
@@ -396,7 +434,7 @@ Namespace OpenForge.Development
                                 vn = New Vector3(.x, .y, .z)
                             End With
                             With .v1
-                                vertices(i * 3) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), Microsoft.Xna.Framework.Color.DarkGray, vn)
+                                vertices(i * 3) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
                             End With
                         End With
                         With .Facets(i)
@@ -404,7 +442,7 @@ Namespace OpenForge.Development
                                 vn = New Vector3(.x, .y, .z)
                             End With
                             With .v2
-                                vertices(i * 3 + 1) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), Microsoft.Xna.Framework.Color.DarkGray, vn)
+                                vertices(i * 3 + 1) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
                             End With
                         End With
                         With .Facets(i)
@@ -412,7 +450,7 @@ Namespace OpenForge.Development
                                 vn = New Vector3(.x, .y, .z)
                             End With
                             With .v3
-                                vertices(i * 3 + 2) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), Microsoft.Xna.Framework.Color.DarkGray, vn)
+                                vertices(i * 3 + 2) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
                             End With
                         End With
                     Next
