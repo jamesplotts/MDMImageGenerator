@@ -13,7 +13,7 @@ Imports System.Drawing
 
 Namespace OpenForge.Development
     ''' <summary>
-    ''' This is the main type for your game.
+    ''' This is the main type for the program.
     ''' </summary>
     Public Class MDMImageGenerator
         Inherits Game
@@ -43,8 +43,6 @@ Namespace OpenForge.Development
         Private _elapsed_time As Double = 0.0F
         Private _fps As Int32 = 0
         Private SavePath As String
-
-
         Private CurDir As eDir = eDir.North
         Private MoveIncrement As Single = 3.0F
         Private GetScreen As Boolean = False
@@ -73,6 +71,9 @@ Namespace OpenForge.Development
         Private vertices() As VertexPositionColorNormal
         Private loadthreadrunning As Boolean = False
         Private SpaceDelay As Boolean = False
+        Private xMin As Single, xMax As Single
+        Private yMin As Single, yMax As Single
+        Private zMin As Single, zMax As Single
 
 
         Public Sub New()
@@ -82,8 +83,8 @@ Namespace OpenForge.Development
             graphics.PreferredBackBufferHeight = 500
         End Sub
 
-        ''' <summary> 
-        ''' Allows the game to perform any initialization it needs to before starting to run.
+        ''' <summary>
+        ''' Allows the program to perform any initialization it needs to before starting to run.
         ''' This is where it can query for any required services and load any non-graphic
         ''' related content.  Calling base.Initialize will enumerate through any components
         ''' and initialize them as well.
@@ -111,12 +112,12 @@ Namespace OpenForge.Development
 
 
         ''' <summary>
-        ''' Allows the game to run logic such as updating the world,
+        ''' Allows the program to run logic such as updating the world,
         ''' checking for collisions, gathering input, and playing audio.
         ''' </summary>
         ''' <param name="gameTime">Provides a snapshot of timing values.</param>
         Protected Overrides Sub Update(gameTime As GameTime)
-            ' FPS logic here
+            ' FPS counter logic here
             _elapsed_time += gameTime.ElapsedGameTime.TotalMilliseconds
             If (_elapsed_time > 1000.0F) Then ' 1 second has passed
                 _fps = _total_frames
@@ -151,26 +152,23 @@ Namespace OpenForge.Development
             ' Keyboard Input Processing Here
             Dim state As KeyboardState = Keyboard.GetState()
             With state
-                If .IsKeyDown(Input.Keys.Up) Then
+                If .IsKeyDown(Input.Keys.Up) Then ' rotate object to the north direction
                     RotateY = Matrix.Identity
                     CurDir = eDir.North
                 End If
-                If .IsKeyDown(Input.Keys.Down) Then
+                If .IsKeyDown(Input.Keys.Down) Then ' rotate object to the south direction
                     RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(180.0F))
                     CurDir = eDir.South
                 End If
-                If .IsKeyDown(Input.Keys.Left) Then
+                If .IsKeyDown(Input.Keys.Left) Then ' rotate object to the west direction
                     RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(-90.0F))
                     CurDir = eDir.West
                 End If
-                If .IsKeyDown(Input.Keys.Right) Then
+                If .IsKeyDown(Input.Keys.Right) Then ' rotate object to the east direction
                     RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(90.0F))
                     CurDir = eDir.East
                 End If
-                If .IsKeyDown(Input.Keys.Delete) Then
-                    bolRotateToggle = Not bolRotateToggle
-                End If
-                If .IsKeyDown(Input.Keys.C) Then
+                If .IsKeyDown(Input.Keys.C) Then  ' Launch color dialog thread
                     If colorthreadrunning = False Then
                         colorthreadrunning = True
                         Dim thread As New Thread(AddressOf SetColor)
@@ -180,8 +178,9 @@ Namespace OpenForge.Development
                 End If
 
 
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) Then End
-                If (.IsKeyDown(Input.Keys.R)) Then
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) Then End ' the program
+
+                If (.IsKeyDown(Input.Keys.R)) Then ' reset flags denoting which views were exported
                     For i As Int32 = 0 To 4
                         OutputGenerated(i) = False
                     Next
@@ -191,14 +190,8 @@ Namespace OpenForge.Development
                     CameraOffset.X = 1000
                     CameraOffset.Z = 1000
                 End If
-                If (.IsKeyDown(Input.Keys.T)) Then
-                    bolRotateToggle = True
-                    FocusPoint.Z = 0
-                    FocusPoint.X = 0
-                    CameraOffset.X = 1000
-                    CameraOffset.Z = 1000
-                End If
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Space) And Not SpaceDelay) Then
+
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Space) And Not SpaceDelay) Then ' Either load a file or save a screenshot and advance the view
                     Dim tb As Boolean = True
                     For i As Int32 = 0 To 4
                         tb = tb And OutputGenerated(i)
@@ -214,31 +207,32 @@ Namespace OpenForge.Development
                         GetScreen = True
                     End If
                 End If
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.A)) Then
+
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.A)) Then  ' shift the object to the left in the view
                     FocusPoint.X += MoveIncrement
                     CameraOffset.X += MoveIncrement
                     FocusPoint.Z -= MoveIncrement
                     CameraOffset.Z -= MoveIncrement
                 End If
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.D)) Then
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.D)) Then  ' shift the object to the right in the view
                     FocusPoint.X -= MoveIncrement
                     CameraOffset.X -= MoveIncrement
                     FocusPoint.Z += MoveIncrement
                     CameraOffset.Z += MoveIncrement
                 End If
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.W)) Then
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.W)) Then  ' shift the object up in the view
                     FocusPoint.X += MoveIncrement
                     CameraOffset.X += MoveIncrement
                     FocusPoint.Z += MoveIncrement
                     CameraOffset.Z += MoveIncrement
                 End If
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.S)) Then
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.S)) Then  ' shift the object down in the view
                     FocusPoint.X -= MoveIncrement
                     CameraOffset.X -= MoveIncrement
                     FocusPoint.Z -= MoveIncrement
                     CameraOffset.Z -= MoveIncrement
                 End If
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.F)) Then
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.F)) Then ' load a new object
                     If loadthreadrunning = False Then
                         loadthreadrunning = True
                         Dim thread As New Thread(AddressOf BackgroundLoader)
@@ -255,8 +249,15 @@ Namespace OpenForge.Development
         ''' </summary>
         ''' <param name="gameTime">Provides a snapshot of timing values.</param>
         Protected Overrides Sub Draw(gameTime As GameTime)
-            _total_frames += 1
+            _total_frames += 1 ' FPS Counter
 
+            ' Set various matrices
+            If bolRotateToggle Then
+                RotateTop = Matrix.CreateRotationZ(MathHelper.ToRadians(55.0F)) * Matrix.CreateRotationY(MathHelper.ToRadians(135.0F))
+            Else
+                RotateTop = Matrix.Identity
+            End If
+            worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY * RotateTop
             BasicEffect.Projection = projectionMatrix
             BasicEffect.View = ViewMatrix
             BasicEffect.World = worldMatrix
@@ -265,16 +266,10 @@ Namespace OpenForge.Development
             Dim RasterizerState As New RasterizerState()
             RasterizerState.CullMode = CullMode.None
 
+            ' Prepare GraphicsDevice
             GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.CornflowerBlue)
             GraphicsDevice.SetVertexBuffer(vertexBuffer)
             GraphicsDevice.RasterizerState = RasterizerState
-
-            If bolRotateToggle Then
-                RotateTop = Matrix.CreateRotationZ(MathHelper.ToRadians(55.0F)) * Matrix.CreateRotationY(MathHelper.ToRadians(135.0F))
-            Else
-                RotateTop = Matrix.Identity
-            End If
-            worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY * RotateTop
 
             ' Draw all the triangles for the currently loaded object
             For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
@@ -282,17 +277,17 @@ Namespace OpenForge.Development
                 If verticesloaded = True Then GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, NumFacets, VertexPositionColorNormal.VertexDeclaration)
             Next
 
-            ' Draw the text output
-            spriteBatch.Begin(, , , DepthStencilState.Default)
-            text(5) = "xmin=" + xMin.ToString + ", xmax=" + xMax.ToString
-            text(6) = "ymin=" + yMin.ToString + ", ymax=" + yMax.ToString
-            text(7) = "zmin=" + zMin.ToString + ", zmax=" + zMax.ToString + ", X=" + FocusPoint.Z.ToString
-
+            ' Prepare screen text display
             text(4) = "FPS=" + _fps.ToString + ", Triangle Count=" + NumFacets.ToString + ", Dir=" + CurDir.ToString + ", Scale=" + ScaleValue.ToString
-            For i As Int32 = 0 To 7
+            text(5) = "xmin=" + xMin.ToString + ", xmax=" + xMax.ToString ' object bounds
+            text(6) = "ymin=" + yMin.ToString + ", ymax=" + yMax.ToString
+            text(7) = "zmin=" + zMin.ToString + ", zmax=" + zMax.ToString
+            ' Draw the text output to the screen
+            spriteBatch.Begin(, , , DepthStencilState.Default)
+            For i As Int32 = 0 To 7 ' upper left text array
                 spriteBatch.DrawString(spriteFont, text(i), spriteFontPosition(i), Microsoft.Xna.Framework.Color.Black)
             Next
-            For i As Int32 = 0 To 4
+            For i As Int32 = 0 To 4 ' lower left text array
                 If OutputGenerated(i) = True Then
                     spriteBatch.DrawString(spriteFont, Text2(i), spriteFontPosition2(4 - i), Microsoft.Xna.Framework.Color.Black) '  
                 Else
@@ -301,15 +296,12 @@ Namespace OpenForge.Development
             Next
             spriteBatch.End()
 
-
             ' Screenshot code 
             If GetScreen = True AndAlso verticesloaded = True Then
                 Static bolAlreadyRun As Boolean
-                If bolAlreadyRun = False Then
+                If bolAlreadyRun = False Then ' rendering to a RenderTarget2D
                     bolAlreadyRun = True
                     screenshot = New RenderTarget2D(GraphicsDevice, width, height, False, SurfaceFormat.Color, DepthFormat.Depth24)
-                    ' rendering to the render target
-
                     GraphicsDevice.SetRenderTarget(screenshot)
                     Dim bolRunOnce As Boolean = True
                     Do While screenshot.IsContentLost Or bolRunOnce
@@ -323,14 +315,14 @@ Namespace OpenForge.Development
                     GraphicsDevice.SetRenderTarget(Nothing) ' finished with render target
                     Dim b As System.Drawing.Bitmap
                     Dim fs As New MemoryStream
-                    ' save render target to stream
+                    ' save intermediate PNG image to stream
                     screenshot.SaveAsPng(fs, width, height)
-                    ' read image from stream
+                    ' read image from stream to a bitmap object
                     b = New Bitmap(fs)
                     fs.Close()
                     ' Make Background Transparent
                     b.MakeTransparent(System.Drawing.Color.CornflowerBlue)
-                    ' make filename
+                    ' assemble output filename
                     Dim s As String = Path.GetDirectoryName(SavePath) + "\" + Path.GetFileNameWithoutExtension(SavePath) + "."
                     If bolRotateToggle Then
                         s += "Top"
@@ -338,19 +330,19 @@ Namespace OpenForge.Development
                         s += CurDir.ToString
                     End If
                     s += ".png"
-                    ' save it!
+                    ' save the PNG image!
                     b.Save(s, System.Drawing.Imaging.ImageFormat.Png)
 
                     ' launch it in system viewer
-                    'Process.Start(s)
-                    If bolRotateToggle Then
+                    ' Process.Start(s)
+                    If bolRotateToggle Then ' Advance image from Top-Down to North Isometric
                         CurDir = eDir.North
                         RotateY = Matrix.Identity
                         bolRotateToggle = False
                         OutputGenerated(0) = True
                         ScaleValue = ScaleValue * 0.7F
                         Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
-                    Else
+                    Else ' Advance image to next isometric
                         OutputGenerated(CurDir + 1) = True
                         CurDir = CType(CurDir + 1, eDir)
                         If CurDir = eDir.Top Then CurDir = eDir.North
@@ -369,7 +361,6 @@ Namespace OpenForge.Development
                 End If
                 GetScreen = False
                 Spacedelay = True
-                'worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY * RotateTop
             End If
             If verticesloaded = False Then GetScreen = False
             MyBase.Draw(gameTime)
@@ -465,12 +456,6 @@ Namespace OpenForge.Development
             End If
             loadthreadrunning = False
         End Sub
-
-        Private xMin As Single, xMax As Single
-        Private yMin As Single, yMax As Single
-        Private zMin As Single, zMax As Single
-
-
 
         ''' <summary>
         ''' LoadContent will be called once per game and is the place to load
