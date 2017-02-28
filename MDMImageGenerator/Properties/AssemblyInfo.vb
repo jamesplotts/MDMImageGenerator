@@ -8,8 +8,8 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyTitle("MDMImageGenerator")>
 <Assembly: AssemblyProduct("MDMImageGenerator")>
 <Assembly: AssemblyConfiguration("")>
-<Assembly: AssemblyDescription("")>
-<Assembly: AssemblyCompany("")>
+<Assembly: AssemblyDescription("Generate PNG snapshots of 3D STL objects.")> 
+<Assembly: AssemblyCompany("OpenForge Development")> 
 <Assembly: AssemblyCopyright("Copyright ©  2017")>
 <Assembly: AssemblyTrademark("")>
 <Assembly: AssemblyCulture("")>
