@@ -14,6 +14,7 @@ Namespace OpenForge.Development
         ''' <summary>
         ''' The main entry point for the application.
         ''' </summary>
+        <STAThread> _
         Public Sub Main()
 
 #If Windows OrElse LINUX Then

@@ -38,8 +38,8 @@ Namespace OpenForge.Development
         Private ScreenWidth As Int32 = 500
         Private spriteFontPosition() As Vector2 = {New Vector2(5, 5), New Vector2(5, 20), New Vector2(5, 35), New Vector2(5, 50), New Vector2(5, 65), New Vector2(5, 80), New Vector2(5, 95), New Vector2(5, 110), New Vector2(5, 125)}
         Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50), New Vector2(5, ScreenHeight - 15 - 65)}
-        Private text() As String = {"Press 'F' to load an *.STL object, C to set color", _
-                                    "Use arrow keys for NSEW views.", _
+        Private text() As String = {"Press 'F' to load an *.STL object, 'C' to set color", _
+                                    "Use arrow keys for NSEW views. 'K' to specify output folder.", _
                                     "WASD to center object, mousewheel to scale.", _
                                     "'SpaceBar' saves screenshot & advances view.", _
                                     "", "", "", "", ""}
@@ -58,6 +58,8 @@ Namespace OpenForge.Development
         Private OutputGenerated(5) As Boolean
         Private ObjectColor As Microsoft.Xna.Framework.Color = Microsoft.Xna.Framework.Color.DarkGray
         Private colorthreadrunning As Boolean
+        Private UseSeparateOutputFolders As Boolean
+        Private OutputFolders As String
 
         Public Enum eDir
             North
@@ -75,6 +77,7 @@ Namespace OpenForge.Development
         Private verticesloaded As Boolean = False
         Private vertices() As VertexPositionColorNormal
         Private loadthreadrunning As Boolean = False
+        Private cfthreadrunning As Boolean = False
         Private SpaceDelay As Boolean = False
         Private xMin As Single, xMax As Single
         Private yMin As Single, yMax As Single
@@ -182,6 +185,14 @@ Namespace OpenForge.Development
                     End If
                 End If
 
+                If .IsKeyDown(Input.Keys.K) Then ' Configure output folders
+                    If cfthreadrunning = False Then
+                        cfthreadrunning = True
+                        Dim thread As New Thread(AddressOf ConfigureFolders)
+                        thread.SetApartmentState(ApartmentState.STA)
+                        thread.Start()
+                    End If
+                End If
 
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape)) Then End ' the program
 
@@ -276,6 +287,7 @@ Namespace OpenForge.Development
             GraphicsDevice.SetVertexBuffer(vertexBuffer)
             GraphicsDevice.RasterizerState = RasterizerState
 
+
             ' Draw all the triangles for the currently loaded object
             For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
                 pass.Apply()
@@ -328,7 +340,7 @@ Namespace OpenForge.Development
                     ' Make Background Transparent
                     b.MakeTransparent(System.Drawing.Color.CornflowerBlue)
                     ' assemble output filename
-                    Dim s As String = Path.GetDirectoryName(SavePath) + "\" + Path.GetFileNameWithoutExtension(SavePath) + "."
+                    Dim s As String = OutputFolders + "\" + Path.GetFileNameWithoutExtension(SavePath) + "."
                     If bolRotateToggle Then
                         s += "Top"
                     Else
@@ -371,7 +383,20 @@ Namespace OpenForge.Development
             MyBase.Draw(gameTime)
         End Sub
 
-
+        <STAThreadAttribute> _
+        Sub ConfigureFolders()
+            cfthreadrunning = True
+            Dim f As New FolderBrowserDialog
+            If SavePath Is Nothing OrElse SavePath.Length = 0 Then
+                SavePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            End If
+            f.SelectedPath = SavePath.Substring(0, SavePath.Length - Path.GetFileName(SavePath).Length)
+            f.Description = "Select Output Folder for images:"
+            Dim dlgres As DialogResult
+            dlgres = f.ShowDialog()
+            If dlgres = DialogResult.OK Then OutputFolders = f.SelectedPath
+            cfthreadrunning = False
+        End Sub
 
         <STAThreadAttribute> _
         Sub SetColor()
