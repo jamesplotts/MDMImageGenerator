@@ -3,4 +3,5 @@
 ## Working Release 
 
   *  Version 1.0.0.13
-  *  
+  *  Released under Gnu GPL 3.0
+  *  To build, you must add the Monogame.Framework.DesktopGL package in the NuGet Package Manager.
