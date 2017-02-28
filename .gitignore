@@ -35,6 +35,7 @@ build/
 *.sbr
 *.tlb
 *.tli
+*.pfx
 *.tlh
 *.tmp
 *.tmp_proj
