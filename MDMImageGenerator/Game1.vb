@@ -1,17 +1,22 @@
-﻿Imports System.Windows.Forms
+﻿' Copyright 2017 by James Plotts.
+' Licensed under Gnu GPL 3.0.
 
-Imports Microsoft.Xna.Framework
-Imports Microsoft.Xna.Framework.Graphics
-Imports Microsoft.Xna.Framework.Input
-Imports Microsoft.Xna.Framework.Content
-Imports System.Threading
+
+
 Imports System
 Imports System.IO
-Imports System.Diagnostics
 Imports System.Drawing
+Imports System.Threading
+Imports System.Diagnostics
+Imports System.Windows.Forms
+Imports Microsoft.Xna.Framework
+Imports Microsoft.Xna.Framework.Input
+Imports Microsoft.Xna.Framework.Content
+Imports Microsoft.Xna.Framework.Graphics
 
 
 Namespace OpenForge.Development
+
     ''' <summary>
     ''' This is the main type for the program.
     ''' </summary>
@@ -360,7 +365,7 @@ Namespace OpenForge.Development
                     bolAlreadyRun = False
                 End If
                 GetScreen = False
-                Spacedelay = True
+                SpaceDelay = True
             End If
             If verticesloaded = False Then GetScreen = False
             MyBase.Draw(gameTime)

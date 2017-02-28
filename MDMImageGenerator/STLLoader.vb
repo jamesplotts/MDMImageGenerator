@@ -1,8 +1,11 @@
-﻿Imports System
+﻿' Copyright 2017 by James Plotts.
+' Licensed under Gnu GPL 3.0.
+' Thanks to thjerman for the Stereolithography File Formats post at:
+'   http://forums.codeguru.com/showthread.php?148668-loading-a-stl-3d-model-file
+
+
+Imports System
 Imports System.IO
-
-
-' Thanks to thjerman for the Stereolithography File Formats post at http://forums.codeguru.com/showthread.php?148668-loading-a-stl-3d-model-file
 
 Namespace OpenForge.Development
 
@@ -62,47 +65,6 @@ Namespace OpenForge.Development
             Public Facets() As Facet
         End Class
 
-
-
-        'Dim stl As STLDefinition.STLObject
-        '        stl = STLDefinition.LoadSTL(fd.OpenFile())
-        '        NumFacets = CInt(stl.STLHeader.nfacets)
-        'Dim vn As Vector3
-        '        ReDim vertices(NumFacets * 3)
-        '        With stl
-        '            For i As Int32 = 0 To NumFacets - 1
-        '                With .Facets(i)
-        '                    With .normal
-        '                        vn = New Vector3(.x, .y, .z)
-        '                    End With
-        '                    With .v1
-        '                        vertices(i * 3) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), Color.DarkGray, vn)
-        '                        vertices(i * 3).Normal.Normalize()
-        '                    End With
-        '                End With
-        '                With .Facets(i)
-        '                    With .normal
-        '                        vn = New Vector3(.x, .y, .z)
-        '                    End With
-        '                    With .v2
-        '                        vertices(i * 3 + 1) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), Color.DarkGray, vn)
-        '                        vertices(i * 3 + 1).Normal.Normalize()
-        '                    End With
-        '                End With
-        '                With .Facets(i)
-        '                    With .normal
-        '                        vn = New Vector3(.x, .y, .z)
-        '                    End With
-        '                    With .v3
-        '                        vertices(i * 3 + 2) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), Color.DarkGray, vn)
-        '                        vertices(i * 3 + 2).Normal.Normalize()
-        '                    End With
-
-        '                End With
-        '            Next
-        '        End With
-
-
         ''' <summary>
         ''' LoadSTL reads a stream and converts the data to an STLObject.  
         ''' Stream must contain an STL formatted file.
@@ -146,7 +108,7 @@ Namespace OpenForge.Development
                             With .normal
                                 .x = rc(sr)
                                 .y = rc(sr)
-                                .z = -rc(sr) ' Negative value Flips to our coordinate system
+                                .z = -rc(sr) ' Negative Z value Flips to our coordinate system
                             End With
                             With .v1
                                 .x = rc(sr)
@@ -214,35 +176,6 @@ Namespace OpenForge.Development
             End Try
             Return vStl
         End Function
-
-        'Private Shared Function LoadFacet(ByVal sr As Stream) As Facet
-        '    Dim retval As New Facet
-        '    With retval
-        '        With .normal
-        '            .x = rc(sr)
-        '            .y = rc(sr)
-        '            .z = -rc(sr)
-        '        End With
-        '        With .v1
-        '            .x = rc(sr)
-        '            .y = rc(sr)
-        '            .z = -rc(sr)
-        '        End With
-        '        With .v2
-        '            .x = rc(sr)
-        '            .y = rc(sr)
-        '            .z = -rc(sr)
-        '        End With
-        '        With .v3
-        '            .x = rc(sr)
-        '            .y = rc(sr)
-        '            .z = -rc(sr)
-        '        End With
-        '    End With
-        '    Dim tb(2) As Byte
-        '    sr.Read(tb, 0, 2) ' just padding bytes not used.
-        '    Return retval
-        'End Function
 
         ''' <summary>
         ''' Reads 4 bytes from the supplied Stream,
