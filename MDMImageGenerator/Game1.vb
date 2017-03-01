@@ -40,7 +40,7 @@ Namespace OpenForge.Development
         Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50), New Vector2(5, ScreenHeight - 15 - 65)}
         Private text() As String = {"Press 'F' to load an *.STL object, 'C' to set color", _
                                     "Use arrow keys for NSEW views. 'K' to specify output folder.", _
-                                    "WASD to center object, mousewheel to scale.", _
+                                    "WASD to center object, mousewheel to scale, 'T' toggles lighting.", _
                                     "'SpaceBar' saves screenshot & advances view.", _
                                     "", "", "", "", ""}
         Private Text2() As String = {"Top", "North", "East", "South", "West"}
@@ -271,9 +271,10 @@ Namespace OpenForge.Development
                         thread.Start()
                     End If
                 End If
-                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.T)) Then   ' shift the object down in the view
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.T)) AndAlso Not SpaceDelay Then   ' toggle default lighting mode
                     pvtDefaultLighting = Not pvtDefaultLighting
                     SetLighting()
+                    SpaceDelay = True
                 End If
             End With
             MyBase.Update(gameTime)
