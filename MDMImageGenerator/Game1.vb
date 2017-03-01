@@ -365,6 +365,11 @@ Namespace OpenForge.Development
                     ' read image from stream to a bitmap object
                     b = New Bitmap(fs)
                     fs.Close()
+                    If bolRotateToggle Then ' Crop image
+                        If BmpHasNonTransparentArea(b) Then
+                            b = CropBitmap(b, pvtCropRegion)
+                        End If
+                    End If
                     ' Make Background Transparent
                     b.MakeTransparent(System.Drawing.Color.CornflowerBlue)
                     ' assemble output filename
@@ -576,42 +581,50 @@ Namespace OpenForge.Development
         End Function
 
         Private Function GetLeftMostSolidPix(ByVal bmp As Bitmap) As Int32
+            Dim c As Drawing.Color = Drawing.Color.FromArgb(255, 100, 149, 237)
             For i As Int32 = 0 To bmp.Size.Width - 1
                 For j As Int32 = 0 To bmp.Size.Height - 1
-                    If Not bmp.GetPixel(i, j) = System.Drawing.Color.CornflowerBlue Then Return i
+                    If Not bmp.GetPixel(i, j) = c Then Return i
                 Next
             Next
             Return -1
         End Function
 
         Private Function GetRightMostSolidPix(ByVal bmp As Bitmap) As Int32
+            Dim c As Drawing.Color = Drawing.Color.FromArgb(255, 100, 149, 237)
             For i As Int32 = bmp.Size.Width - 1 To 0 Step -1
                 For j As Int32 = 0 To bmp.Size.Height - 1
-                    If Not bmp.GetPixel(i, j) = System.Drawing.Color.CornflowerBlue Then Return i
+                    If Not bmp.GetPixel(i, j) = c Then Return i
                 Next
             Next
             Return -1
         End Function
 
         Private Function GetTopMostSolidPix(ByVal bmp As Bitmap) As Int32
+            Dim c As Drawing.Color = Drawing.Color.FromArgb(255, 100, 149, 237)
             For j As Int32 = 0 To bmp.Size.Height - 1
                 For i As Int32 = 0 To bmp.Size.Width - 1
-                    If Not bmp.GetPixel(i, j) = System.Drawing.Color.CornflowerBlue Then Return i
+                    If Not bmp.GetPixel(i, j) = c Then Return j
                 Next
             Next
             Return -1
         End Function
 
         Private Function GetBottomMostSolidPix(ByVal bmp As Bitmap) As Int32
+            Dim c As Drawing.Color = Drawing.Color.FromArgb(255, 100, 149, 237)
             For j As Int32 = bmp.Size.Height - 1 To 0 Step -1
                 For i As Int32 = 0 To bmp.Size.Width - 1
-                    If Not bmp.GetPixel(i, j) = System.Drawing.Color.CornflowerBlue Then Return i
+                    If Not bmp.GetPixel(i, j) = c Then Return j
                 Next
             Next
             Return -1
         End Function
+
         Private Function CropBitmap(ByRef bmp As Bitmap, ByVal cropX As Integer, ByVal cropY As Integer, ByVal cropWidth As Integer, ByVal cropHeight As Integer) As Bitmap
-            Dim rect As New System.Drawing.Rectangle(cropX, cropY, cropWidth, cropHeight)
+            Return CropBitmap(bmp, New System.Drawing.Rectangle(cropX, cropY, cropWidth, cropHeight))
+        End Function
+
+        Private Function CropBitmap(ByRef bmp As Bitmap, ByVal rect As Drawing.Rectangle) As Bitmap
             Dim cropped As Bitmap = bmp.Clone(rect, bmp.PixelFormat)
             Return cropped
         End Function
