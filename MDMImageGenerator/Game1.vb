@@ -36,13 +36,13 @@ Namespace OpenForge.Development
         Private height As Int32 = 300
         Private ScreenHeight As Int32 = 500
         Private ScreenWidth As Int32 = 500
-        Private spriteFontPosition() As Vector2 = {New Vector2(5, 5), New Vector2(5, 20), New Vector2(5, 35), New Vector2(5, 50), New Vector2(5, 65), New Vector2(5, 80), New Vector2(5, 95), New Vector2(5, 110), New Vector2(5, 125)}
+        Private spriteFontPosition() As Vector2 = {New Vector2(5, 5), New Vector2(5, 20), New Vector2(5, 35), New Vector2(5, 50), New Vector2(5, 65), New Vector2(5, 80), New Vector2(5, 95), New Vector2(5, 110), New Vector2(5, 125), New Vector2(5, 140)}
         Private spriteFontPosition2() As Vector2 = {New Vector2(5, ScreenHeight - 15 - 5), New Vector2(5, ScreenHeight - 15 - 20), New Vector2(5, ScreenHeight - 15 - 35), New Vector2(5, ScreenHeight - 15 - 50), New Vector2(5, ScreenHeight - 15 - 65)}
         Private text() As String = {"Press 'F' to load an *.STL object, 'C' to set color", _
                                     "Use arrow keys for NSEW views. 'K' to specify output folder.", _
                                     "WASD to center object, mousewheel to scale, 'T' toggles lighting.", _
                                     "'SpaceBar' saves screenshot & advances view.", _
-                                    "", "", "", "", ""}
+                                    "", "", "", "", "", ""}
         Private Text2() As String = {"Top", "North", "East", "South", "West"}
         Private _total_frames As Int32 = 0
         Private _elapsed_time As Double = 0.0F
@@ -327,9 +327,10 @@ Namespace OpenForge.Development
             text(5) = "xmin=" + xMin.ToString + ", xmax=" + xMax.ToString ' object bounds
             text(6) = "ymin=" + yMin.ToString + ", ymax=" + yMax.ToString
             text(7) = "zmin=" + zMin.ToString + ", zmax=" + zMax.ToString
+            text(8) = "cam pos: " + CameraOffset.ToString
             ' Draw the text output to the screen
             spriteBatch.Begin(, , , DepthStencilState.Default)
-            For i As Int32 = 0 To 7 ' upper left text array
+            For i As Int32 = 0 To 8 ' upper left text array
                 spriteBatch.DrawString(spriteFont, text(i), spriteFontPosition(i), Microsoft.Xna.Framework.Color.Black)
             Next
             For i As Int32 = 0 To 4 ' lower left text array
