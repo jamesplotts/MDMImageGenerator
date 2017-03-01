@@ -152,11 +152,12 @@ Namespace OpenForge.Development
             End If
             Dim scrollticks As Int32 = m.ScrollWheelValue
             If Not scrollticks = ScrollValue Then
-                ScaleValue += 0.001F * (scrollticks - ScrollValue)
-                Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
-                ScrollValue = scrollticks
+                If Not System.Windows.Forms.Control.FromHandle((Me.Window.Handle)) Is Nothing AndAlso System.Windows.Forms.Control.FromHandle((Me.Window.Handle)).Focused = True Then
+                    ScaleValue += 0.001F * (scrollticks - ScrollValue)
+                    Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
+                    ScrollValue = scrollticks
+                End If
             End If
-
             ' Keyboard Input Processing Here
             Dim state As KeyboardState = Keyboard.GetState()
             With state
@@ -340,6 +341,11 @@ Namespace OpenForge.Development
                     ' Make Background Transparent
                     b.MakeTransparent(System.Drawing.Color.CornflowerBlue)
                     ' assemble output filename
+                    If OutputFolders Is Nothing OrElse OutputFolders = "" Then
+                        OutputFolders = Path.GetDirectoryName(SavePath)
+                        ' OutputFolders = SavePath '
+                    End If
+
                     Dim s As String = OutputFolders + "\" + Path.GetFileNameWithoutExtension(SavePath) + "."
                     If bolRotateToggle Then
                         s += "Top"
