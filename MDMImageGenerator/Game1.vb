@@ -152,7 +152,7 @@ Namespace OpenForge.Development
             End If
             Dim scrollticks As Int32 = m.ScrollWheelValue
             If Not scrollticks = ScrollValue Then
-                If Not System.Windows.Forms.Control.FromHandle((Me.Window.Handle)) Is Nothing AndAlso System.Windows.Forms.Control.FromHandle((Me.Window.Handle)).Focused = True Then
+                If Me.IsActive Then
                     ScaleValue += 0.001F * (scrollticks - ScrollValue)
                     Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
                     ScrollValue = scrollticks
@@ -288,12 +288,20 @@ Namespace OpenForge.Development
             GraphicsDevice.SetVertexBuffer(vertexBuffer)
             GraphicsDevice.RasterizerState = RasterizerState
 
+            Try
+                ' Draw all the triangles for the currently loaded object
+                For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
+                    pass.Apply()
+                    If verticesloaded = True Then
+                        GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, NumFacets, VertexPositionColorNormal.VertexDeclaration)
+                    Else
 
-            ' Draw all the triangles for the currently loaded object
-            For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
-                pass.Apply()
-                If verticesloaded = True Then GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, NumFacets, VertexPositionColorNormal.VertexDeclaration)
-            Next
+                    End If
+
+                Next
+            Catch e As Exception
+            End Try
+
 
             ' Prepare screen text display
             text(4) = "FPS=" + _fps.ToString + ", Triangle Count=" + NumFacets.ToString + ", Dir=" + CurDir.ToString + ", Scale=" + ScaleValue.ToString
@@ -431,7 +439,7 @@ Namespace OpenForge.Development
             fd.Title = "Open *.STL File"
             fd.Multiselect = False
             fd.Filter = "STL Files (*.stl)|*.stl"
-            verticesloaded = False
+
             fd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             dlgres = fd.ShowDialog()
             If dlgres = DialogResult.OK Then
@@ -440,7 +448,7 @@ Namespace OpenForge.Development
                 stl = STLDefinition.LoadSTL(fd.OpenFile())
                 NumFacets = CInt(stl.STLHeader.nfacets)
                 Dim vn As Vector3
-                ReDim vertices(NumFacets * 3)
+                Dim lVertices(NumFacets * 3) As VertexPositionColorNormal
                 With stl
                     For i As Int32 = 0 To NumFacets - 1
                         With .Facets(i)
@@ -448,7 +456,7 @@ Namespace OpenForge.Development
                                 vn = New Vector3(.x, .y, .z)
                             End With
                             With .v1
-                                vertices(i * 3) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
+                                lVertices(i * 3) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
                             End With
                         End With
                         With .Facets(i)
@@ -456,7 +464,7 @@ Namespace OpenForge.Development
                                 vn = New Vector3(.x, .y, .z)
                             End With
                             With .v2
-                                vertices(i * 3 + 1) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
+                                lVertices(i * 3 + 1) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
                             End With
                         End With
                         With .Facets(i)
@@ -464,7 +472,7 @@ Namespace OpenForge.Development
                                 vn = New Vector3(.x, .y, .z)
                             End With
                             With .v3
-                                vertices(i * 3 + 2) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
+                                lVertices(i * 3 + 2) = New VertexPositionColorNormal(New Vector3(.x, .y, .z), ObjectColor, vn)
                             End With
                         End With
                     Next
@@ -478,6 +486,9 @@ Namespace OpenForge.Development
                         zMax = .zmax
                     End With
                 End With
+                verticesloaded = False
+                'ReDim vertices(NumFacets * 3)
+                vertices = lVertices
                 verticesloaded = True
                 For i As Int32 = 0 To 4
                     OutputGenerated(i) = False
