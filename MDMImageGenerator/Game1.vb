@@ -82,6 +82,7 @@ Namespace OpenForge.Development
         Private xMin As Single, xMax As Single
         Private yMin As Single, yMax As Single
         Private zMin As Single, zMax As Single
+        Private pvtDefaultLighting As Boolean = False
 
 
         Public Sub New()
@@ -105,19 +106,32 @@ Namespace OpenForge.Development
             BasicEffect = New BasicEffect(GraphicsDevice)
             BasicEffect.Alpha = 1.0F
             BasicEffect.VertexColorEnabled = True
-            With BasicEffect
-                .LightingEnabled = True '// turn on the lighting subsystem.
-                .DirectionalLight0.DiffuseColor = New Vector3(0.5F, 0.5F, 0.5F) '// a red light
-                .DirectionalLight0.Direction = New Vector3(0, -1, 0) '// coming along the x-axis
-                .DirectionalLight0.SpecularColor = New Vector3(1, 1, 1) '// with green highlights
-                .AmbientLightColor = New Vector3(0.2F, 0.2F, 0.2F)
-                .EmissiveColor = New Vector3(0.7F, 0.7F, 0.7F)
-            End With
+            SetLighting()
             spriteBatch = New SpriteBatch(GraphicsDevice)
             spriteFont = Content.Load(Of SpriteFont)("SpriteFont1")
 
         End Sub
 
+        Private Sub SetLighting()
+            With BasicEffect
+                If pvtDefaultLighting Then
+                    .LightingEnabled = False '// turn off the lighting subsystem.
+                    .DirectionalLight0.DiffuseColor = Nothing
+                    .DirectionalLight0.Direction = Nothing
+                    .DirectionalLight0.SpecularColor = Nothing
+                    .AmbientLightColor = Nothing
+                    .EmissiveColor = Nothing
+                    .EnableDefaultLighting()
+                Else
+                    .LightingEnabled = True '// turn on the lighting subsystem.
+                    .DirectionalLight0.DiffuseColor = New Vector3(0.5F, 0.5F, 0.5F) '// a gray light
+                    .DirectionalLight0.Direction = New Vector3(0, -1, 0)
+                    .DirectionalLight0.SpecularColor = New Vector3(1, 1, 1) '// with white highlights
+                    .AmbientLightColor = New Vector3(0.2F, 0.2F, 0.2F)
+                    .EmissiveColor = New Vector3(0.7F, 0.7F, 0.7F)
+                End If
+            End With
+        End Sub
 
         ''' <summary>
         ''' Allows the program to run logic such as updating the world,
@@ -256,6 +270,10 @@ Namespace OpenForge.Development
                         thread.SetApartmentState(ApartmentState.STA)
                         thread.Start()
                     End If
+                End If
+                If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.T)) Then   ' shift the object down in the view
+                    pvtDefaultLighting = Not pvtDefaultLighting
+                    SetLighting()
                 End If
             End With
             MyBase.Update(gameTime)
