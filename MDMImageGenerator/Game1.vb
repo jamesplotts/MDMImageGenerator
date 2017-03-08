@@ -28,7 +28,6 @@ Namespace OpenForge.Development
         Private worldMatrix As Matrix
         Private triangleVertices() As VertexPositionColor
         Private BasicEffect As BasicEffect
-        Private vertexBuffer As VertexBuffer
         Private screenshot As RenderTarget2D
         Private spriteFont As SpriteFont
         ' size of the screenshot images
@@ -304,7 +303,6 @@ Namespace OpenForge.Development
 
             ' Prepare GraphicsDevice
             GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.CornflowerBlue)
-            GraphicsDevice.SetVertexBuffer(vertexBuffer)
             GraphicsDevice.RasterizerState = RasterizerState
 
             Try
@@ -327,7 +325,8 @@ Namespace OpenForge.Development
             text(5) = "xmin=" + xMin.ToString + ", xmax=" + xMax.ToString ' object bounds
             text(6) = "ymin=" + yMin.ToString + ", ymax=" + yMax.ToString
             text(7) = "zmin=" + zMin.ToString + ", zmax=" + zMax.ToString
-            text(8) = "cam pos: " + CameraOffset.ToString
+            text(8) = "XY: " + pvtUS1.ToString + ", " + pvtUS2.ToString
+            'text(8) = "cam pos: " + CameraOffset.ToString
             ' Draw the text output to the screen
             spriteBatch.Begin(, , , DepthStencilState.Default)
             For i As Int32 = 0 To 8 ' upper left text array
@@ -452,6 +451,8 @@ Namespace OpenForge.Development
             colorthreadrunning = False
         End Sub
 
+
+        Private pvtUS1 As Single, pvtUS2 As Single
         ''' <summary>
         ''' Displays an open file dialog and then loads the chosen STL object.
         ''' </summary>
@@ -472,6 +473,8 @@ Namespace OpenForge.Development
                 SavePath = fd.FileName
                 stl = STLDefinition.LoadSTL(fd.OpenFile())
                 NumFacets = CInt(stl.STLHeader.nfacets)
+                pvtUS1 = stl.STLHeader.xpixelsize
+                pvtUS2 = stl.STLHeader.ypixelsize
                 Dim vn As Vector3
                 Dim lVertices(NumFacets * 3) As VertexPositionColorNormal
                 With stl
