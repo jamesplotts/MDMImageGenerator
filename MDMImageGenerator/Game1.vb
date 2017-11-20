@@ -22,7 +22,7 @@ Namespace OpenForge.Development
     ''' </summary>
     Public Class MDMImageGenerator
         Inherits Game
-        Private graphics As GraphicsDeviceManager
+        Private graphicsgdm As GraphicsDeviceManager
         Private spriteBatch As SpriteBatch
         Private projectionMatrix As Matrix
         Private worldMatrix As Matrix
@@ -59,6 +59,7 @@ Namespace OpenForge.Development
         Private colorthreadrunning As Boolean
         Private UseSeparateOutputFolders As Boolean
         Private OutputFolders As String
+        Private OldLoadThreadRunning As Boolean
 
         Public Enum eDir
             North
@@ -82,13 +83,25 @@ Namespace OpenForge.Development
         Private yMin As Single, yMax As Single
         Private zMin As Single, zMax As Single
         Private pvtDefaultLighting As Boolean = False
+        Private tfpX As Single, tfpZ As Single
+        Private coX As Single, coZ As Single
+        Private tfpX2 As Single, tfpZ2 As Single
+        Private tfpX3 As Single, tfpZ3 As Single
+        Private tfpX4 As Single, tfpZ4 As Single
+        Private tfpX5 As Single, tfpZ5 As Single
+        Private coX2 As Single, coZ2 As Single
+        Private coX3 As Single, coZ3 As Single
+        Private coX4 As Single, coZ4 As Single
+        Private coX5 As Single, coZ5 As Single
+
+
 
 
         Public Sub New()
-            graphics = New GraphicsDeviceManager(Me)
+            graphicsgdm = New GraphicsDeviceManager(Me)
             Content.RootDirectory = "Content"
-            graphics.PreferredBackBufferWidth = 500
-            graphics.PreferredBackBufferHeight = 500
+            graphicsgdm.PreferredBackBufferWidth = 500
+            graphicsgdm.PreferredBackBufferHeight = 500
         End Sub
 
         ''' <summary>
@@ -130,6 +143,31 @@ Namespace OpenForge.Development
                     .EmissiveColor = New Vector3(0.7F, 0.7F, 0.7F)
                 End If
             End With
+        End Sub
+
+        Sub Setposition()
+            Select Case CurDir
+                Case eDir.North
+                    tfpX4 = FocusPoint.X
+                    coX4 = CameraOffset.X
+                    tfpZ4 = FocusPoint.Z
+                    coZ4 = CameraOffset.Z
+                Case eDir.South
+                    tfpX = FocusPoint.X
+                    coX = CameraOffset.X
+                    tfpZ = FocusPoint.Z
+                    coZ = CameraOffset.Z
+                Case eDir.West
+                    tfpX2 = FocusPoint.X
+                    coX2 = CameraOffset.X
+                    tfpZ2 = FocusPoint.Z
+                    coZ2 = CameraOffset.Z
+                Case eDir.East
+                    tfpX3 = FocusPoint.X
+                    coX3 = CameraOffset.X
+                    tfpZ3 = FocusPoint.Z
+                    coZ3 = CameraOffset.Z
+            End Select
         End Sub
 
         ''' <summary>
@@ -225,13 +263,20 @@ Namespace OpenForge.Development
                     Dim tb As Boolean = True
                     For i As Int32 = 0 To 4
                         tb = tb And OutputGenerated(i)
+                        
+                        
                     Next
                     If tb = True OrElse verticesloaded = False Then
                         If loadthreadrunning = False Then
+                            tfpX = FocusPoint.X
+                            coX = CameraOffset.X
+                            tfpZ = FocusPoint.Z
+                            coZ = CameraOffset.Z
                             loadthreadrunning = True
                             Dim thread As New Thread(AddressOf BackgroundLoader)
                             thread.SetApartmentState(ApartmentState.STA)
                             thread.Start()
+                            OldLoadThreadRunning = True
                         End If
                     Else
                         GetScreen = True
@@ -243,24 +288,32 @@ Namespace OpenForge.Development
                     CameraOffset.X += MoveIncrement
                     FocusPoint.Z -= MoveIncrement
                     CameraOffset.Z -= MoveIncrement
+                    Setposition()
                 End If
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.D)) Then  ' shift the object to the right in the view
                     FocusPoint.X -= MoveIncrement
                     CameraOffset.X -= MoveIncrement
                     FocusPoint.Z += MoveIncrement
                     CameraOffset.Z += MoveIncrement
+                    Setposition()
                 End If
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.W)) Then  ' shift the object up in the view
                     FocusPoint.X += MoveIncrement
                     CameraOffset.X += MoveIncrement
                     FocusPoint.Z += MoveIncrement
                     CameraOffset.Z += MoveIncrement
+                    Setposition()
+                End If
+                If (.IsKeyDown(Input.Keys.O)) Then
+                    CenterObject()
+                    Setposition()
                 End If
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.S)) Then  ' shift the object down in the view
                     FocusPoint.X -= MoveIncrement
                     CameraOffset.X -= MoveIncrement
                     FocusPoint.Z -= MoveIncrement
                     CameraOffset.Z -= MoveIncrement
+                    Setposition()
                 End If
                 If (.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.F)) Then ' load a new object
                     If loadthreadrunning = False Then
@@ -286,12 +339,27 @@ Namespace OpenForge.Development
         Protected Overrides Sub Draw(gameTime As GameTime)
             _total_frames += 1 ' FPS Counter
 
+            If OldLoadThreadRunning = True And loadthreadrunning = False Then
+                OldLoadThreadRunning = False
+                CenterObject()
+
+            End If
+            If SizingUp Then
+                ScaleValue += 0.1F
+                If Not IsBorderClear() Then SizingUp = False
+            End If
+            If SizingDown Then
+                ScaleValue -= 0.1F
+                If IsBorderClear() Then SizingDown = False
+            End If
+
             ' Set various matrices
             If bolRotateToggle Then
                 RotateTop = Matrix.CreateRotationZ(MathHelper.ToRadians(55.0F)) * Matrix.CreateRotationY(MathHelper.ToRadians(135.0F))
             Else
                 RotateTop = Matrix.Identity
             End If
+            Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
             worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY * RotateTop
             BasicEffect.Projection = projectionMatrix
             BasicEffect.View = ViewMatrix
@@ -341,30 +409,14 @@ Namespace OpenForge.Development
             Next
             spriteBatch.End()
 
+
             ' Screenshot code 
             If GetScreen = True AndAlso verticesloaded = True Then
                 Static bolAlreadyRun As Boolean
                 If bolAlreadyRun = False Then ' rendering to a RenderTarget2D
                     bolAlreadyRun = True
-                    screenshot = New RenderTarget2D(GraphicsDevice, width, height, False, SurfaceFormat.Color, DepthFormat.Depth24)
-                    GraphicsDevice.SetRenderTarget(screenshot)
-                    Dim bolRunOnce As Boolean = True
-                    Do While screenshot.IsContentLost Or bolRunOnce
-                        GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.CornflowerBlue)
-                        For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
-                            pass.Apply()
-                            GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, NumFacets, VertexPositionColorNormal.VertexDeclaration)
-                        Next
-                        bolRunOnce = False
-                    Loop
-                    GraphicsDevice.SetRenderTarget(Nothing) ' finished with render target
                     Dim b As System.Drawing.Bitmap
-                    Dim fs As New MemoryStream
-                    ' save intermediate PNG image to stream
-                    screenshot.SaveAsPng(fs, width, height)
-                    ' read image from stream to a bitmap object
-                    b = New Bitmap(fs)
-                    fs.Close()
+                    b = GrabScreenshot()
                     If bolRotateToggle Then ' Crop image
                         If BmpHasNonTransparentArea(b) Then
                             b = CropBitmap(b, pvtCropRegion)
@@ -397,6 +449,7 @@ Namespace OpenForge.Development
                         OutputGenerated(0) = True
                         ScaleValue = ScaleValue * 0.7F
                         Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
+                        
                     Else ' Advance image to next isometric
                         OutputGenerated(CurDir + 1) = True
                         CurDir = CType(CurDir + 1, eDir)
@@ -404,22 +457,152 @@ Namespace OpenForge.Development
                         Select Case CurDir
                             Case eDir.North
                                 RotateY = Matrix.Identity
+                                tfpX4 = FocusPoint.X
+                                coX4 = CameraOffset.X
+                                tfpZ4 = FocusPoint.Z
+                                coZ4 = CameraOffset.Z
+                                FocusPoint.X = tfpX
+                                CameraOffset.X = coX
+                                FocusPoint.Z = tfpZ
+                                CameraOffset.Z = coZ
                             Case eDir.South
                                 RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(180.0F))
+                                tfpX = FocusPoint.X
+                                coX = CameraOffset.X
+                                tfpZ = FocusPoint.Z
+                                coZ = CameraOffset.Z
+                                FocusPoint.X = tfpX2
+                                CameraOffset.X = coX2
+                                FocusPoint.Z = tfpZ2
+                                CameraOffset.Z = coZ2
+
                             Case eDir.West
                                 RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(-90.0F))
+                                tfpX2 = FocusPoint.X
+                                coX2 = CameraOffset.X
+                                tfpZ2 = FocusPoint.Z
+                                coZ2 = CameraOffset.Z
+                                FocusPoint.X = tfpX3
+                                CameraOffset.X = coX3
+                                FocusPoint.Z = tfpZ3
+                                CameraOffset.Z = coZ3
+
                             Case eDir.East
                                 RotateY = Matrix.CreateRotationY(MathHelper.ToRadians(90.0F))
+                                tfpX3 = FocusPoint.X
+                                coX3 = CameraOffset.X
+                                tfpZ3 = FocusPoint.Z
+                                coZ3 = CameraOffset.Z
+                                FocusPoint.X = tfpX4
+                                CameraOffset.X = coX4
+                                FocusPoint.Z = tfpZ4
+                                CameraOffset.Z = coZ4
+
                         End Select
                     End If
                     bolAlreadyRun = False
                 End If
+                bolAlreadyRun = False
                 GetScreen = False
                 SpaceDelay = True
             End If
             If verticesloaded = False Then GetScreen = False
             MyBase.Draw(gameTime)
         End Sub
+
+
+        Private SizingUp As Boolean = False
+        Private SizingDown As Boolean = False
+
+        Private Sub CenterObject()
+            If IsBorderClear() Then
+                SizingUp = True
+            Else
+                SizingDown = True
+            End If
+        End Sub
+
+        Private Function IsBorderClear() As Boolean
+            Dim topcleared As Boolean = True
+            Dim bottomcleared As Boolean = True
+            Dim leftcleared As Boolean = True
+            Dim rightcleared As Boolean = True
+            Dim b As Bitmap
+            b = GrabScreenshot()
+            If Not b Is Nothing Then
+                With b
+                    Dim x As Int32 = 0
+                    Do While x < b.Width - 1 And topcleared And bottomcleared
+                        topcleared = topcleared And (.GetPixel(x, 0).ToArgb = System.Drawing.Color.CornflowerBlue.ToArgb)
+                        bottomcleared = bottomcleared And (.GetPixel(x, b.Height - 1).ToArgb = System.Drawing.Color.CornflowerBlue.ToArgb)
+                        x += 1
+                    Loop
+                    If Not topcleared Or Not bottomcleared Then Return False
+                    Dim y As Int32 = 0
+                    Do While y < .Height - 1 And leftcleared And rightcleared
+                        leftcleared = leftcleared And (.GetPixel(0, y).ToArgb = System.Drawing.Color.CornflowerBlue.ToArgb)
+                        rightcleared = rightcleared And (.GetPixel(b.Width - 1, y).ToArgb = System.Drawing.Color.CornflowerBlue.ToArgb)
+                        y += 1
+                    Loop
+                    If Not leftcleared Or Not rightcleared Then Return False
+                End With
+                b = Nothing
+                Return True
+            Else
+                Return False
+            End If
+        End Function
+
+        Private Function GrabScreenshot() As Bitmap
+            Dim ss As RenderTarget2D
+            Dim b As System.Drawing.Bitmap = Nothing
+            Static bolGeneratingCurrently As Boolean
+            If Not bolGeneratingCurrently Then
+                bolGeneratingCurrently = True
+                Scales = New Vector3(ScaleValue, ScaleValue, ScaleValue)
+                worldMatrix = ObjectCenter * Matrix.CreateScale(Scales) * Matrix.CreateRotationX(MathHelper.ToRadians(90.0F)) * RotateY * RotateTop
+                BasicEffect.Projection = projectionMatrix
+                BasicEffect.View = ViewMatrix
+                BasicEffect.World = worldMatrix
+
+                ' Turn off culling so we see both sides of our rendered triangle
+                Dim RasterizerState As New RasterizerState()
+                RasterizerState.CullMode = CullMode.None
+
+                ' Prepare GraphicsDevice
+                'GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.CornflowerBlue)
+                GraphicsDevice.RasterizerState = RasterizerState
+
+                ss = New RenderTarget2D(GraphicsDevice, width, height, False, SurfaceFormat.Color, DepthFormat.Depth24)
+                GraphicsDevice.SetRenderTarget(ss)
+                Dim bolRunOnce As Boolean = True
+                Do While bolRunOnce
+                    GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.CornflowerBlue)
+                    For Each pass As EffectPass In BasicEffect.CurrentTechnique.Passes
+                        pass.Apply()
+                        If verticesloaded = True Then
+                            GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, NumFacets, VertexPositionColorNormal.VertexDeclaration)
+                        End If
+                    Next
+                    bolRunOnce = False
+                Loop
+                GraphicsDevice.SetRenderTarget(Nothing) ' finished with render target
+
+                Dim fs As New MemoryStream
+                Try
+                    ' save intermediate PNG image to stream
+                    ss.SaveAsPng(fs, width, height)
+                    ' read image from stream to a bitmap object
+                    b = New Bitmap(fs)
+                Catch
+                End Try
+                fs.Close()
+                ss = Nothing
+                fs = Nothing
+                bolGeneratingCurrently = False
+            End If
+            Return b
+        End Function
 
         <STAThreadAttribute> _
         Sub ConfigureFolders()
@@ -528,8 +711,10 @@ Namespace OpenForge.Development
                 FocusPoint.X = 0
                 CameraOffset.X = 1000
                 CameraOffset.Z = 1000
+                
             End If
             loadthreadrunning = False
+
         End Sub
 
         ''' <summary>
