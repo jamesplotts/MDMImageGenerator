@@ -1,5 +1,5 @@
 # MDMImageGenerator
-Exports 4 Isometric and 1 Topdown view of a *.STL 3D object file to PNG format. Works with OpenForge tiles.
+Exports 4 Isometric and 1 Topdown view of a *.STL 3D object file to PNG format.
 
 This project aims to create a utility to generate isometric and top-down PNG images of *.STL (Stereolithography) object files.
 
